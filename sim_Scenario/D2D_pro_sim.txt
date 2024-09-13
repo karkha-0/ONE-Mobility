@@ -1,0 +1,61 @@
+# Simulation-specific settings
+Scenario.name = MiraiMalwarePropagationD2D
+Scenario.simulateConnections = true
+Scenario.updateInterval = 0.1
+Scenario.endTime = 10000
+Scenario.nrofHostGroups = 1
+
+# D2D (Device-to-Device) Communication
+d2dInterface.type = SimpleBroadcastInterface
+d2dInterface.transmitSpeed = 1M
+d2dInterface.transmitRange = 150
+
+# Device group settings (100 nodes in total)
+Group.movementModel = RandomWaypoint
+#Group.router = EpidemicRouter
+Group.router = InfectionRouter
+#Group.router = D2DRouter
+# Installation time (seconds) before the infected device becomes active for propagation
+Group.installationTime = 20
+Group.bufferSize = 5M
+Group.nrofInterfaces = 1
+Group.interface1 = d2dInterface
+Group.speed = 1.0, 5.0
+Group.nrofHosts = 100
+Group.groupID = d2dDevice
+
+# Define which devices are infected by malware at the start
+Events.nrof = 1
+Events1.class = MessageEventGenerator
+Events1.interval = 20, 40
+# Mirai malware size (0.5MB to 1MB)
+Events1.size = 500k, 1M
+Events1.hosts = 0,10
+Events1.tohosts = 10,99
+Events1.prefix = MiraiMalware
+Events1.msgTTL = 300
+Events1.nrofCopies = 1
+
+# Transmission Success and Installation Parameters
+# Minimum contact time (seconds) for successful malware transmission (adjusted for negotiation, errors, etc.)
+Group.contactTime = 1  
+
+
+
+# Movement model settings
+MovementModel.rngSeed = 1
+MovementModel.worldSize = 2000, 2000
+
+# Reports (basic setup, can be extended)
+Optimization.cellSizeMult = 5
+Optimization.randomizeUpdateOrder = true
+
+## Reports
+Report.nrofReports = 6
+Report.reportDir = reports/D2D_MalwarePropagation
+Report.report1 = MessageStatsReport
+Report.report2 = ContactTimesReport
+Report.report3 = MessageDeliveryReport
+Report.report4 = ConnectivityONEReport
+Report.report5 = DetailedMessageTransferReport
+Report.report6 = EventLogReport
