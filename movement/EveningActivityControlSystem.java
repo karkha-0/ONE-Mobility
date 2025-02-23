@@ -2,6 +2,11 @@
  * Copyright 2010 Aalto University, ComNet
  * Released under GPLv3. See LICENSE.txt for details. 
  */
+/*
+ * Copyright 2024, Lund Univeristy, EIT, Security and Networks group
+ * Released under GPLv3. See LICENSE.txt for details. 
+ * Update the use of Integer deprecated, updated the file
+ */
 package movement;
 
 import java.util.HashMap;
@@ -52,7 +57,7 @@ public class EveningActivityControlSystem {
 	 * @param eveningMovement activity movement
 	 */
 	public void addEveningActivityNode(EveningActivityMovement eveningMovement) {
-		eveningActivityNodes.put(new Integer(eveningMovement.getID()), 
+		eveningActivityNodes.put(Integer.valueOf(eveningMovement.getID()), 
 				eveningMovement);
 	}
 	
@@ -61,8 +66,25 @@ public class EveningActivityControlSystem {
 	 * @param meetingSpots
 	 */
 	public void setMeetingSpots(List<Coord> meetingSpots) {
+
+		// Lund added this
+		System.out.println("DEBUG: Setting meeting spots...");
+		for (Coord c : meetingSpots) {
+			System.out.println("DEBUG: Initial Meeting Spot: " + c);
+		}
+		//Lund end
+
 		this.meetingSpots = meetingSpots;
 		this.nextTrips = new EveningTrip[meetingSpots.size()];
+
+		// Lund added this 
+		// Verify after assignment
+		System.out.println("DEBUG: Final Meeting Spots After Assignment:");
+		for (Coord c : this.meetingSpots) {
+			System.out.println("DEBUG: Final Meeting Spot: " + c);
+		}
+		// Lund end
+
 	}
 	
 	/**
@@ -73,8 +95,12 @@ public class EveningActivityControlSystem {
 	 */
 	public EveningTrip getEveningInstructions(int eveningActivityNodeID) {
 		EveningActivityMovement eveningMovement = eveningActivityNodes.get(
-				new Integer(eveningActivityNodeID));
+				Integer.valueOf(eveningActivityNodeID));
 		if (eveningMovement != null) {
+
+			//Lund added this
+			System.out.println("DEBUG: Assigning meeting trip for node " + eveningActivityNodeID);
+
 			int index = eveningActivityNodeID % meetingSpots.size();
 			if (nextTrips[index] == null) {
 				int nrOfEveningMovementNodes = (int)(eveningMovement.
@@ -85,7 +111,12 @@ public class EveningActivityControlSystem {
 				Coord loc = meetingSpots.get(index).clone();
 				nextTrips[index] = new EveningTrip(nrOfEveningMovementNodes, 
 						loc);
+
+				// Lund added this
+				System.out.println("DEBUG: Node " + eveningActivityNodeID + " assigned to meeting spot " + loc);
+
 			}
+
 			nextTrips[index].addNode(eveningMovement);
 			if (nextTrips[index].isFull()) {
 				EveningTrip temp = nextTrips[index];
@@ -127,12 +158,12 @@ public class EveningActivityControlSystem {
 	 */
 	public static EveningActivityControlSystem getEveningActivityControlSystem(
 			int id) {
-		if (controlSystems.containsKey(new Integer(id))) {
-			return controlSystems.get(new Integer(id));
+		if (controlSystems.containsKey(Integer.valueOf(id))) {
+			return controlSystems.get(Integer.valueOf(id));
 		} else {
 			EveningActivityControlSystem scs = 
 				new EveningActivityControlSystem(id);
-			controlSystems.put(new Integer(id), scs);
+			controlSystems.put(Integer.valueOf(id), scs);
 			return scs;
 		}
 	}

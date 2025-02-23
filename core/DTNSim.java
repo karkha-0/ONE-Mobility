@@ -4,6 +4,7 @@
  */
 package core;
 import gui.DTNSimGUI;
+import report.MobilityLoggerReport;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -91,6 +92,10 @@ public class DTNSim {
 			Settings.setRunIndex(guiIndex);
 			new DTNSimGUI().start();
 		}
+
+		// Lund Team added this Finalize mobility logger
+		MobilityLoggerReport.finalizeLog();
+		//END
 	}
 	
 	/**

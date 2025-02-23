@@ -4,13 +4,21 @@
  */
 package input;
 
+import java.util.Random;
+
 import core.Settings;
 import core.SettingsError;
 
-// LTH added this
+// Lund Team added this
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+
+import routing.D2DRouter;
 import routing.InfectionRouter;
-import java.util.*;
-// End of LTH
+// End
+
 
 /**
  * Message creation -external events generator. Creates uniformly distributed
@@ -51,7 +59,6 @@ public class MessageEventGenerator implements EventQueue {
 	/** Time of the next event (simulated seconds) */
 	protected double nextEventsTime = 0;
 	/** Range of host addresses that can be senders or receivers */
-	// LTH added static to hostRange
 	protected int[] hostRange = {0, 0};
 	/** Range of host addresses that can be receivers */
 	protected int[] toHostRange = null;
@@ -69,9 +76,9 @@ public class MessageEventGenerator implements EventQueue {
 	/** Random number generator for this Class */
 	protected Random rng;
 
-	//LTH added this
+	// Lund Team added this
 	List<Integer> expandedHostRange = new ArrayList<>();
-	// LTH End
+	//End
 	
 	/**
 	 * Constructor, initializes the interval between events, 
@@ -133,12 +140,12 @@ public class MessageEventGenerator implements EventQueue {
 			}
 		}
 
-		// LTH added this 
+		// Lund Team added this
 		// Convert the initial hostRange (array of two integers) to a list of all nodes in that range
 		for (int i = hostRange[0]; i <= hostRange[1]; i++) {
 			expandedHostRange.add(i);
 		}
-		//LTH end 
+		// END 
 		
 		/* calculate the first event's time */
 		this.nextEventsTime = (this.msgTime != null ? this.msgTime[0] : 0) 
@@ -161,7 +168,7 @@ public class MessageEventGenerator implements EventQueue {
 	}*/
 
 	/**
-	 * LTH added this and commneted the method above
+	 * Lund Team added this and commneted the original drawHostAddress method
 	 * Draws a random host address from the configured list of hosts.
 	 * If the list contains only two values, it assumes it's a range.
 	 * @param hostRange The list of hosts (can be non-consecutive values)
@@ -214,56 +221,13 @@ public class MessageEventGenerator implements EventQueue {
 		return to;
 	}
 	
-	// LTH - added this 
-	/**
-     * This method dynamically updates the host range using the list of infected nodes.
-     * @param infectedNodesList List of infected nodes
-     */
-    /*public void updateHosts(List<Integer> infectedNodesList) {
-        System.out.println("Message Event: Updating hosts with infected nodes: " + infectedNodesList);
-
-        // Update the host range based on the infected nodes list
-        int newSize = infectedNodesList.size();
-        hostRange = new int[newSize];
-
-        // Fill the hostRange array with infected nodes
-        for (int i = 0; i < newSize; i++) {
-            hostRange[i] = infectedNodesList.get(i);
-        }
-
-        System.out.println("Message Event: Updated host range: " + Arrays.toString(hostRange));
-    }*/
-	public void updateHostsFromInfectionRouter_() {
-		 
-		 // Fetch the static infected nodes list from InfectionRouter
-		 //List<Integer> infectedNodesList = InfectionRouter.getInfectedNodesList();
-
-		 Set<Integer> infectedNodesSet = InfectionRouter.getInfectedNodesSet();
-
-		 // If the set is not empty, update the host range
-		 if (!infectedNodesSet.isEmpty()) {
-            System.out.println("Updating host range with infected nodes: " + infectedNodesSet);
-            // Convert the HashSet to an array or handle it accordingly
-            // Depending on how hostRange is used, you may need to convert it
-            int[] newHostRange = infectedNodesSet.stream().mapToInt(Integer::intValue).toArray();
-            // Update your hostRange with this new array
-            this.hostRange = newHostRange;
-			System.out.println("Updated host range: " + Arrays.toString(hostRange));
-        }
-		 /* 
-		 if (!infectedNodesList.isEmpty()) {
-			 // Update the host range to reflect the infected nodes
-			 hostRange = infectedNodesList.stream().mapToInt(Integer::intValue).toArray();
-			 System.out.println("Updated host range: " + Arrays.toString(hostRange));
-		 } 
-		 */       
-        
-    }
-
+	// Lund Team added this
+	// This is only needed for InfectionRouter as it uses message event generator in the config file
 	public void updateHostsFromInfectionRouter() {
-
 		// Fetch the static infected nodes list from InfectionRouter
-		Set<Integer> infectedNodesSet = InfectionRouter.getInfectedNodesSet();
+		Set<Integer> InfectionRouterNodesSet = InfectionRouter.getInfectedNodesSet();
+		Set<Integer> infectedNodesSet = new HashSet<>();
+		infectedNodesSet.addAll(InfectionRouterNodesSet);
 	
 		if (!infectedNodesSet.isEmpty()) {
 			// Add infected nodes to the list, avoiding duplicates
@@ -274,11 +238,9 @@ public class MessageEventGenerator implements EventQueue {
 		
 			// Update your hostRange with this new array
 			this.hostRange = newHostRange;
-			System.out.println("Updated host range: " + Arrays.toString(hostRange));
 		}
 	}
-	
-	// End of LTH modifications
+	// End 
 
 
 	/** 
@@ -292,10 +254,10 @@ public class MessageEventGenerator implements EventQueue {
 		int from;
 		int to;
 		
-		// LTH added this
+		// Lund Team added this
 		updateHostsFromInfectionRouter();
-		//End of LTH 
-
+		//End
+		
 		/* Get two *different* nodes randomly from the host ranges */
 		from = drawHostAddress(this.hostRange);	
 		to = drawToAddress(hostRange, from);
@@ -311,8 +273,7 @@ public class MessageEventGenerator implements EventQueue {
 		if (this.msgTime != null && this.nextEventsTime > this.msgTime[1]) {
 			/* next event would be later than the end time */
 			this.nextEventsTime = Double.MAX_VALUE;
-		}
-		
+		}		
 		return mce;
 	}
 

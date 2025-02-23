@@ -90,11 +90,18 @@ public class EveningTrip {
 	 * @return true if all nodes are there
 	 */
 	public boolean allMembersPresent() {
-		if (!isFull()) {
+		/*if (!isFull()) {
+
+			// Lund added this 
+			System.out.println("DEBUG: Trip is NOT FULL yet!");
+
 			return false;
-		}
+		}*/
 		for (int i=0; i<eveningActivityNodes.length; i++) {
 			if (!eveningActivityNodes[i].isReadyToShop()) {
+
+				//Lund added this
+
 				return false;
 			}
 		}

@@ -4,7 +4,23 @@
  */
 package routing;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.json.JSONObject;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
+import core.DTNHost;
+import core.Message;
 import core.Settings;
+import core.SimClock;
 
 /**
  * Epidemic message router with drop-oldest buffer and only single transferring
@@ -12,6 +28,13 @@ import core.Settings;
  */
 public class EpidemicRouter extends ActiveRouter {
 	
+	private boolean isInfected = false; // Infection status
+	private double malwareRecvTime = -1; // Time when the malware was received
+
+	private static JsonGenerator infectionLogWriter;
+	private String reportDir;
+	private DTNHost srcMalwareNode; // The node that infected this node
+
 	/**
 	 * Constructor. Creates a new message router based on the settings in
 	 * the given Settings object.
@@ -20,6 +43,19 @@ public class EpidemicRouter extends ActiveRouter {
 	public EpidemicRouter(Settings s) {
 		super(s);
 		//TODO: read&use epidemic router specific settings (if any)
+
+		Settings reportSettings = new Settings("Report");
+        this.reportDir = reportSettings.getSetting("reportDir");
+
+		try {
+            ObjectMapper mapper = new ObjectMapper();
+			JsonFactory jsonFactory = new JsonFactory(mapper); // Attach ObjectMapper as codec
+		
+			infectionLogWriter = jsonFactory.createGenerator(new FileWriter(reportDir + "/infection_log.json"));
+			infectionLogWriter.writeStartArray();
+		} catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 	
 	/**
@@ -29,11 +65,45 @@ public class EpidemicRouter extends ActiveRouter {
 	protected EpidemicRouter(EpidemicRouter r) {
 		super(r);
 		//TODO: copy epidemic settings here (if any)
+
+		this.isInfected = r.isInfected;
+		this.malwareRecvTime = r.malwareRecvTime;
+		this.srcMalwareNode = r.srcMalwareNode;
 	}
 			
 	@Override
 	public void update() {
 		super.update();
+
+		if (!isInfected && malwareRecvTime > 0) {
+
+			isInfected = true;
+
+            JSONObject infectionData = new JSONObject(new LinkedHashMap<>());
+            infectionData.put("node_id", getHost().getAddress());
+            infectionData.put("infected_by", srcMalwareNode.getAddress());
+            infectionData.put("malware_active_time", SimClock.getTime());
+            infectionData.put("node_postion_at_active_infected", getHost().getLocation().toString());
+            infectionData.put("infection_status", "Infected Active");
+            //infectionDataArray.put(infectionData);
+
+            // To fix memory issue
+			ObjectMapper mapper = new ObjectMapper(); // Create a temporary ObjectMapper
+            mapper.enable(SerializationFeature.INDENT_OUTPUT); // Enable pretty-printing
+			try {
+				mapper.writeValue(infectionLogWriter, infectionData.toMap()); // Serialize data to the writer
+				infectionLogWriter.flush(); // Ensure data is written to disk
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					infectionLogWriter.flush(); // Double-check flushing
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
 		if (isTransferring() || !canStartTransfer()) {
 			return; // transferring, don't try other connections yet
 		}
@@ -46,11 +116,35 @@ public class EpidemicRouter extends ActiveRouter {
 		// then try any/all message to any/all connection
 		this.tryAllMessagesToAllConnections();
 	}
+
+	 @Override
+    public int receiveMessage(Message m, DTNHost from) {
+		int result = super.receiveMessage(m, from);
+		if (m.getTo().equals(this.getHost())) {
+			if (!isInfected) {
+				if (result == RCV_OK) {
+					malwareRecvTime = SimClock.getTime();
+					System.out.println("Node " + this.getHost().getAddress() +
+						" received infection from node " + from.getAddress() +
+						" at " + SimClock.getTime());
+					srcMalwareNode = from;
+				}
+			}
+		}
+		return result;
+	}
 	
 	
 	@Override
 	public EpidemicRouter replicate() {
 		return new EpidemicRouter(this);
 	}
+
+	// To finalize Json file at end of sim
+    public static Map<String, JsonGenerator> getLogWriters() {
+        Map<String, JsonGenerator> writers = new HashMap<>();
+        writers.put("infectionLogWriter", infectionLogWriter);
+        return writers;
+    }
 
 }

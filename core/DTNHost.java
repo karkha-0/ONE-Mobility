@@ -10,6 +10,7 @@ import java.util.List;
 
 import movement.MovementModel;
 import movement.Path;
+import report.MobilityLoggerReport;
 import routing.MessageRouter;
 import routing.util.RoutingInfo;
 
@@ -33,6 +34,11 @@ public class DTNHost implements Comparable<DTNHost> {
 	private List<MovementListener> movListeners;
 	private List<NetworkInterface> net;
 	private ModuleCommunicationBus comBus;
+
+	// Lund Team added this
+	//private double nextLogTime = 0.0;
+	//private static final double LOG_INTERVAL = 1.0; // Log every second
+	// END 
 
 	static {
 		DTNSim.registerForReset(DTNHost.class.getCanonicalName());
@@ -339,6 +345,12 @@ public class DTNHost implements Comparable<DTNHost> {
 			}
 		}
 		this.router.update();
+
+		// Lund Team added this Log mobility trace
+		double currentTime = SimClock.getTime();
+		Coord position = this.getLocation();
+		MobilityLoggerReport.logMobility(this.getAddress(), position, currentTime);
+		// END
 	}
 	
 	/** 
